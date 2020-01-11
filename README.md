@@ -1,9 +1,3 @@
-# SpeedCoach
-This is the nwHacks 2020 entry
-
-##Part List
-*
-
 SpeedCoach
 
 This is an entry for the .....
