@@ -17,17 +17,7 @@ This is an entry for the .....
 * [License](#license)
 
 ##  Goals
-* Have a BFS pathing snake
-* Have a snake that wins(Ideally)
-* Machine Learning
- 1. Make a simple neural network that will get better over time
- 2. Improve input layer by tweaking parameters and increasing input nodes
- 3. Implement a way to remove not needed hidden layer nodes
- 4. Implement BFS into pathing
- 5. Make snake self sustaining and improving on [play.battlesnake.io](https://play.battlesnake.io)
-* Figure out how to feed neural net all data in game. This includes:
- * Board of size NxM and Z snakes. Where N,M,Z ∈ ℤ
- * All food locations
+* TBA
 
 ##  Part list
 * IIC/I2C/TWI/SP​​I Serial Interface2004 20X4 Character LCD Module  
