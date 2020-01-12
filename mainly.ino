@@ -12,11 +12,13 @@
 #include <TinyGPS.h>            //This is for the GPS unit
 #include <LiquidCrystal_I2C.h>  //This is for the LCD with I2C circut
 
-//Globals
+//Globals to edit for set for user
 
-//Comment if not debuging
-#define DEBUG
+#define GPS_PING_GAP 5          //Change this number to higher one if you have a lower number of satellites where you normaly row.
+//If you know what you're doing you should also calibrate your gyro
 
+
+//Globals for user not to touch
 #define GRAVITY 16500
 
 #define CAP_TOUCH_PIN 6       // connect to the OUT pin on touch sensor
@@ -44,22 +46,16 @@
 // resistant but may ignore real strokes if too high.
 #define ACCEL_SAMPLES 50
 
-#define SPEED_SAMPLES 5
-
-// Cancels stroke detection if this many milliseconds have elapsed since the
-// start of a stroke.
-#define STROKE_DETECT_TIMEOUT 5000
-
 // When acceleration above the acceleration threshold is detected, we start
 // scanning for a maximum. As soon as acceleration starts to decrease, we record
 // the maximum acceleration vector. Then,
 #define STROKE_START_ACCEL 3000
 #define STROKE_RECOVERY_TOLERANCE 100
 
+//Global ints, floats, ect.
 int strokes = 0;
 bool stroking = false;
 bool isPull = false;
-
 // maximum accelerations, at the apexes of the strokes.
 int16_t x_max, y_max, z_max,
   x_last, y_last, z_last;
@@ -71,8 +67,11 @@ TinyGPS gps;                                                //Gps initialize(1)
 SoftwareSerial ss(GPS_TX_PIN, GPS_RX_PIN);                  //Gps start serial connection
 
 int16_t accel_samples[ACCEL_SAMPLES];
-int16_t speed_samples[SPEED_SAMPLES] = { 0 };
 unsigned distance;
+
+long last_lat  = 0, last_lon  = 0;
+unsigned long init_trip_time  = 0;
+//end of Globals
 
 // Resets things like distance, speed, strokes/min, etc.
 void setup_trip() {
@@ -180,7 +179,9 @@ void end_of_stroke() {
   /* lcd.clear(); */
   /* lcd.setCursor(0, 0); */
   /* lcd.print("") */
+
 }
+
 
 void loop() {
   update_acceleration();
