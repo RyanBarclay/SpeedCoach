@@ -20,7 +20,7 @@
 #define CAP_TOUCH_PIN 6				// connect to the OUT pin on touch sensor
 
 #define GPS_RX_PIN 8					// Use RX and TX pins as labeled *on the GPS*
-#define GPS_TX_PIN
+#define GPS_TX_PIN 9
 
 #define LCD_I2C_ADDRESS 0x3F	//I2C address found via https://tinyurl.com/yyz4npoz
 #define LCD_ROWS 4
@@ -67,9 +67,6 @@ int16_t x_max, y_max, z_max,
 	acceleration_last,
 	state_change_millis = 0;
 
-
-
-
 //	initialization
 LiquidCrystal_I2C lcd(LCD_I2C_ADDRESS, LCD_COLS, LCD_ROWS);	//LCD initialize
 MPU6050 accel;																							//Gyro initialize
@@ -101,18 +98,18 @@ void setup() {
 	lcd.print("Init: Accelerometer");
 	accel.initialize();
 	if (!accel.testConnection()) {
-		#ifdef DEBUG
-			lcd.setCursor(0,0);
-			lcd.print("Accelerometer fail");
-			while (1) { delay(1000); }
-		#endif
-	}else{
-		#ifdef DEBUG
-			lcd.setCursor(0,0)
-			lcd.print("Acceleromete Work")
-			delay(1000);
-			lcd.clear()
-		#endif
+#ifdef DEBUG
+		lcd.setCursor(0,0);
+		lcd.print("Accelerometer fail");
+		while (1) { delay(1000); }
+#endif
+	} else {
+#ifdef DEBUG
+		lcd.setCursor(0,0);
+		lcd.print("Accelerometer Works");
+		delay(1000);
+		lcd.clear();
+#endif
 	}
 
 
