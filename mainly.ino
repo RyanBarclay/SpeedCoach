@@ -46,13 +46,13 @@
 //****END OF REDONE CODE***
 // How many samples of acceleration data to use. Higher values are more noise
 // resistant but may ignore real strokes if too high.
-#define ACCEL_SAMPLES 30
+#define ACCEL_SAMPLES 50
 
 // When acceleration above the acceleration threshold is detected, we start
 // scanning for a maximum. As soon as acceleration starts to decrease, we record
 // the maximum acceleration vector. Then,
-#define STROKE_START_ACCEL 2000
-#define STROKE_RECOVERY_TOLERANCE 200
+#define STROKE_START_ACCEL 3000
+#define STROKE_RECOVERY_TOLERANCE 150
 
 #define STARTUP_TIMEOUT (10 * 1000)
 
@@ -150,7 +150,7 @@ void update_splits() {
 	if (last_split_time != 0) {
 		distance += split_distance;
 		split_secs = (int)((float)((millis() - last_split_time) / 2) / split_distance);
-		int secs_since_last_split = (int)(millis() - last_split_time) / 1000;
+		int secs_since_last_split = (int)((millis() - last_split_time) / 1000);
 		strokes_per_minute = GPS_PING_GAP * 60 / secs_since_last_split;
 	} else {
 		split_secs = 0;
