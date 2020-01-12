@@ -107,7 +107,7 @@ void startup(){
 
   int32_t initTime = millis();
   int32_t deltaTimeMin = 0;
-  while((10 > gps.satellites() || gps.satellites() == 255) && (deltaTimeMin < 0)){
+  while((10 > gps.satellites() || gps.satellites() == 255) && (deltaTimeMin < 2)){
     int32_t curTime = millis();             //millis is in milliseconds
     int32_t deltaTime = curTime - initTime; //in milliseconds
     deltaTimeMin = (deltaTime/1000)/60; //(ms / 1000)/60 = 1s /60 = 1min
