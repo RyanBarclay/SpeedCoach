@@ -151,10 +151,8 @@ void update_splits() {
 	if (last_split_time != 0) {
 		distance += split_distance;
 		split_secs = (int)((float)((millis() - last_split_time) / 2) / split_distance);
-		int secs_since_last_split = (int)((millis() - (unsigned long)last_split_time) / 1000L);
-		Serial.print(secs_since_last_split, DEC);
-		Serial.write("\n");
-		strokes_per_minute = GPS_PING_GAP * 6 / secs_since_last_split;
+		unsigned long ms_since_last_split = millis() - last_split_time;
+		strokes_per_minute = (GPS_PING_GAP * 60000L) / ms_since_last_split;
 	} else {
 		split_secs = 0;
 		strokes_per_minute = 0;
@@ -165,9 +163,17 @@ void update_splits() {
 	last_split_time = millis();
 
 	lcd.setCursor(0, 0);
+	lcd.print("      ");
+	lcd.setCursor(0, 0);
 	lcd.print(distance);
+
+	lcd.setCursor(0, 1);
+	lcd.print("   ");
 	lcd.setCursor(0, 1);
 	lcd.print(split_secs);
+
+	lcd.setCursor(0, 2);
+	lcd.print("   ");
 	lcd.setCursor(0, 2);
 	lcd.print(strokes_per_minute);
 }
