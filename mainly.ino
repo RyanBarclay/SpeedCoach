@@ -54,26 +54,16 @@
 // When acceleration above the acceleration threshold is detected, we start
 // scanning for a maximum. As soon as acceleration starts to decrease, we record
 // the maximum acceleration vector. Then, 
-#define STROKE_START_ACCEL 2000
-#define STROKE_END_ACCEL 1000
+#define STROKE_START_ACCEL 3000
 #define STROKE_RECOVERY_TOLERANCE 500
 
-enum stroke_detect_state {
-	STROKE_DETECT_NULL,     // in between strokes or initial
-	STROKE_DETECT_STARTED,  // The start of the stroke was detected, waiting for
-                        	// point of maximum acceleration
-	STROKE_DETECT_STROKING, // Partway through the stroke, waiting for the end of
-													// the stroke.
-	STROKE_DETECT_RECOVERY, // The stroke is ended. We are waiting for the
-													// stroke-end acceleration to subside.
-};
-
-enum stroke_detect_state stroke_detect_state = STROKE_DETECT_NULL;
+int strokes = 0;
+bool stroking = false;
+bool isPull = false;
 
 // maximum accelerations, at the apexes of the strokes.
 int16_t x_max, y_max, z_max,
 	x_last, y_last, z_last,
-	acceleration_last,
 	state_change_millis = 0; // set when a state might never naturally end.
 
 //	initialization
@@ -181,73 +171,23 @@ void end_of_stroke() {
 void loop() {
 	update_acceleration();
 	int16_t acceleration = update_acceleration();
-	switch (stroke_detect_state) {
-	case STROKE_DETECT_NULL:
-	{
+
+	if (stroking) {
+		if (abs(acceleration - GRAVITY) < STROKE_RECOVERY_TOLERANCE ||
+				millis() - state_change_millis > STROKE_DETECT_TIMEOUT) {
+			stroking = false;
+			lcd.clear();
+			if (!isPull) strokes++;
+			isPull = !isPull;
+			lcd.print("STROKES: " + String(strokes));
+			delay(50);
+		}
+	} else {
 		if (abs(acceleration - GRAVITY) > STROKE_START_ACCEL) {
-#ifdef DEBUG
-			Serial.write("STROKE: NULL->STARTED\n");
-#endif
-			stroke_detect_state = STROKE_DETECT_STARTED;
 			state_change_millis = millis();
+			stroking = true;
 		}
-		break;
-	}
-	case STROKE_DETECT_STARTED:
-	{
-		if (acceleration < acceleration_last) {
-#ifdef DEBUG
-			Serial.write("STROKE: STARTED->STROKING\n");
-#endif
-			x_max = x_last;
-			y_max = y_last;
-			z_max = z_last;
-			stroke_detect_state = STROKE_DETECT_STROKING;
-		}
-		break;
-	}
-	case STROKE_DETECT_STROKING:
-	{
-		// find the component of the acceleration that's opposite the maximum
-		// acceleration from earlier
-		if (-STROKE_END_ACCEL >
-				((int32_t)x_last * x_max +
-				 (int32_t)y_last * y_max +
-				 (int32_t)z_last * z_max) /
-			sqrt((int32_t)x_max*x_max +
-					 (int32_t)y_max*y_max +
-					 (int32_t)z_max*z_max)) {
-#ifdef DEBUG
-			Serial.write("STROKE: STARTED->RECOVERY\n");
-#endif
-			end_of_stroke();
-			stroke_detect_state = STROKE_DETECT_RECOVERY;
-			// If the acceleration really quickly changes from negative to positive,
-			// it might never be close to 0/gravity.
-			state_change_millis = millis();
-		}
-		break;
-	}
-	case STROKE_DETECT_RECOVERY:
-	{
-		if (abs(acceleration - GRAVITY) < STROKE_RECOVERY_TOLERANCE) {
-#ifdef DEBUG
-			Serial.write("STROKE: RECOVERY->NULL\n");
-#endif
-			stroke_detect_state = STROKE_DETECT_NULL;
-		}
-		break;
-	}
-	}
-	acceleration_last = acceleration;
-
-	if (stroke_detect_state != STROKE_DETECT_NULL &&
-			millis() > state_change_millis + STROKE_DETECT_TIMEOUT) {
-#ifdef DEBUG
-		Serial.write("STROKE: TIMEOUT ->NULL\n");
-#endif
-		stroke_detect_state = STROKE_DETECT_NULL;
 	}
 
-	delay(100);
+	delay(1);
 }
