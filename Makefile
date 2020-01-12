@@ -1,4 +1,4 @@
-BOARD_TAG = uno
+BOARD_TAG = atmega328
 ARDUINO_LIBS = Wire SoftwareSerial I2Cdev MPU6050 TinyGPS LiquidCrystal_I2C
-MONITOR_PORT = /dev/ttyACM0
+MONITOR_PORT = /dev/ttyUSB0
 include /usr/share/arduino/Arduino.mk
