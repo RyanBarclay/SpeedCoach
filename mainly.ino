@@ -54,7 +54,7 @@
 #define STROKE_START_ACCEL 3000
 #define STROKE_RECOVERY_TOLERANCE 150
 
-#define STARTUP_TIMEOUT (10 * 1000)
+#define STARTUP_TIMEOUT (4 * 1000)
 
 //  initialization
 LiquidCrystal_I2C lcd(LCD_I2C_ADDRESS, LCD_COLS, LCD_ROWS); //LCD initialize
@@ -85,7 +85,7 @@ void setup_trip() {
     accel_samples[i] = GRAVITY; // force of gravity, theoretically
   }
 	distance = 0;
-	init_trip_time = 0;
+	init_trip_time = millis();
 	last_tick_time = 0;
 	last_split_time = 0;
 }
@@ -112,7 +112,6 @@ void startup(){
   accel.setXAccelOffset(ACCEL_X_OFFSET);
   accel.setYAccelOffset(ACCEL_Y_OFFSET);
   accel.setZAccelOffset(ACCEL_Z_OFFSET);
-  setup_trip();
 
   unsigned long initTime = millis();
   unsigned long deltaTime = 0;
@@ -138,6 +137,8 @@ void startup(){
 			lcd.print(gps.satellites());
 		}
   }
+
+  setup_trip();
 }
 
 // Update GPS stuff and the display after each stroke.
@@ -150,8 +151,10 @@ void update_splits() {
 	if (last_split_time != 0) {
 		distance += split_distance;
 		split_secs = (int)((float)((millis() - last_split_time) / 2) / split_distance);
-		int secs_since_last_split = (int)((millis() - last_split_time) / 1000);
-		strokes_per_minute = GPS_PING_GAP * 60 / secs_since_last_split;
+		int secs_since_last_split = (int)((millis() - (unsigned long)last_split_time) / 1000L);
+		Serial.print(secs_since_last_split, DEC);
+		Serial.write("\n");
+		strokes_per_minute = GPS_PING_GAP * 6 / secs_since_last_split;
 	} else {
 		split_secs = 0;
 		strokes_per_minute = 0;
@@ -161,11 +164,11 @@ void update_splits() {
 	last_lon = lon;
 	last_split_time = millis();
 
-	lcd.setCursor(10, 0);
+	lcd.setCursor(0, 0);
 	lcd.print(distance);
-	lcd.setCursor(7, 1);
+	lcd.setCursor(0, 1);
 	lcd.print(split_secs);
-	lcd.setCursor(14, 2);
+	lcd.setCursor(0, 2);
 	lcd.print(strokes_per_minute);
 }
 
@@ -190,7 +193,7 @@ void setup() {
 	lcd.setCursor(14, 2);
 	lcd.print("|Rate");
   lcd.setCursor(14, 3);
-  lcd.print("|Time")
+  lcd.print("|Time");
 
 	update_splits();
 }
@@ -226,8 +229,6 @@ void loop() {
   if (stroking) {
     if (abs(acceleration - GRAVITY) < STROKE_RECOVERY_TOLERANCE) {
       stroking = false;
-			lcd.setCursor(0, 3);
-			lcd.print(isPull);
       if (!isPull) {
 				if (++stroke_parity == GPS_PING_GAP) {
 					stroke_parity = 0;
@@ -241,6 +242,20 @@ void loop() {
       stroking = true;
     }
   }
+
+	if (millis() - last_tick_time > 1000) {
+		unsigned long total_seconds = (millis() - init_trip_time) / 1000;
+		char min[3];
+		char sec[3];
+		sprintf(min, "%02ld", total_seconds / 60);
+		sprintf(sec, "%02ld", total_seconds % 60);
+		last_tick_time = millis();
+		lcd.setCursor(0, 3);
+		lcd.print(min);
+		lcd.print(":");
+		lcd.print(sec);
+	}
+
 
 	while (ss.available()) {
 		gps.encode(ss.read());
