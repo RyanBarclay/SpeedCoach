@@ -19,6 +19,8 @@
 																//row.
 //If you know what you're doing you should also calibrate your gyro
 
+// uncomment to have some fake distance after every split.
+// #define GPS_TEST
 
 //Globals for user not to touch
 #define GRAVITY 16500
@@ -146,13 +148,16 @@ void update_splits() {
 	float lat, lon;
 	gps.f_get_position(&lat, &lon);
 	float split_distance = gps.distance_between(lat, lon, last_lat, last_lon);
-	if (split_distance > GPS_PING_CAP * 100) split_distance = 0;
+#ifdef GPS_TEST
+	split_distance = rand() % 110;
+#endif
+	if (split_distance > GPS_PING_GAP * 100 || split_distance == 0) split_distance = 1;
 	int split_secs, strokes_per_minute;
 
 	if (last_split_time != 0) {
 		distance += split_distance;
-		split_secs = (int)((float)((millis() - last_split_time) / 2) / split_distance);
 		unsigned long ms_since_last_split = millis() - last_split_time;
+		split_secs = (int)((float)(ms_since_last_split / 2L) / split_distance);
 		strokes_per_minute = (GPS_PING_GAP * 60000L) / ms_since_last_split;
 	} else {
 		split_secs = 0;
@@ -169,9 +174,13 @@ void update_splits() {
 	lcd.print(distance);
 
 	lcd.setCursor(0, 1);
-	lcd.print("   ");
-	lcd.setCursor(0, 1);
-	lcd.print(split_secs);
+	char split_min_str[3];
+	char split_sec_str[3];
+	sprintf(split_sec_str, "%02d", split_secs % 60);
+	sprintf(split_min_str, "%02d", split_secs / 60);
+	lcd.print(split_min_str);
+	lcd.print(":");
+	lcd.print(split_sec_str);
 
 	lcd.setCursor(0, 2);
 	lcd.print("   ");
