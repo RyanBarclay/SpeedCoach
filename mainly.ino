@@ -156,7 +156,7 @@ void update_splits() {
 		split_secs = 0;
 		strokes_per_minute = 0;
 	}
-	
+
 	last_lat = lat;
 	last_lon = lon;
 	last_split_time = millis();
@@ -183,12 +183,14 @@ void setup() {
 
   delay(1000);
   lcd.clear();
-  lcd.setCursor(0, 0);
-	lcd.print("Distance: ");
-	lcd.setCursor(0, 1);
-	lcd.print("Split: ");
-	lcd.setCursor(0, 2);
-	lcd.print("Strokes/Min: ");
+  lcd.setCursor(14, 0);
+	lcd.print("|Dist");
+	lcd.setCursor(14, 1);
+	lcd.print("|Splt");
+	lcd.setCursor(14, 2);
+	lcd.print("|Rate");
+  lcd.setCursor(14, 3);
+  lcd.print("|Time")
 
 	update_splits();
 }
