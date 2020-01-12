@@ -42,7 +42,7 @@
 //****END OF REDONE CODE***
 // How many samples of acceleration data to use. Higher values are more noise
 // resistant but may ignore real strokes if too high.
-#define ACCEL_SAMPLES 20
+#define ACCEL_SAMPLES 50
 
 #define SPEED_SAMPLES 5
 
@@ -54,7 +54,7 @@
 // scanning for a maximum. As soon as acceleration starts to decrease, we record
 // the maximum acceleration vector. Then,
 #define STROKE_START_ACCEL 3000
-#define STROKE_RECOVERY_TOLERANCE 500
+#define STROKE_RECOVERY_TOLERANCE 100
 
 int strokes = 0;
 bool stroking = false;
@@ -62,8 +62,7 @@ bool isPull = false;
 
 // maximum accelerations, at the apexes of the strokes.
 int16_t x_max, y_max, z_max,
-  x_last, y_last, z_last,
-  state_change_millis = 0; // set when a state might never naturally end.
+  x_last, y_last, z_last;
 
 //  initialization
 LiquidCrystal_I2C lcd(LCD_I2C_ADDRESS, LCD_COLS, LCD_ROWS); //LCD initialize
@@ -79,6 +78,57 @@ unsigned distance;
 void setup_trip() {
   for (int i = 0; i < ACCEL_SAMPLES; i++) {
     accel_samples[i] = GRAVITY; // force of gravity, theoretically
+  }
+}
+
+void startup(){
+  lcd.setCursor(0 ,0);
+  lcd.print("  DIY SPEED COACH!  ");
+  lcd.setCursor(0 ,1);
+  lcd.print("  Accelerometer:    ");
+  lcd.setCursor(0 ,2);
+  lcd.print(" GPS: Sat Count:    ");
+  lcd.setCursor(0 ,3);
+  lcd.print("Time:   :           ");
+	delay(1000);
+  accel.initialize();
+  if (!accel.testConnection()) {
+    lcd.setCursor(17 ,1);
+    lcd.print("X");
+  } else {
+    lcd.setCursor(17,1);
+    lcd.print("Y");
+  }
+  accel.setFullScaleAccelRange(0);
+  accel.setXAccelOffset(ACCEL_X_OFFSET);
+  accel.setYAccelOffset(ACCEL_Y_OFFSET);
+  accel.setZAccelOffset(ACCEL_Z_OFFSET);
+  setup_trip();
+
+  int32_t initTime = millis();
+  int32_t deltaTimeMin = 0;
+  while((10 > gps.satellites() || gps.satellites() == 255) && (deltaTimeMin < 0)){
+    int32_t curTime = millis();             //millis is in milliseconds
+    int32_t deltaTime = curTime - initTime; //in milliseconds
+    deltaTimeMin = (deltaTime/1000)/60; //(ms / 1000)/60 = 1s /60 = 1min
+    int32_t deltaTimeSec = (deltaTime/1000) - (deltaTimeMin*60);  //(ms / 1000) = 1s
+    lcd.setCursor(6,3);
+		char min_str[2];
+		char sec_str[2];
+		sprintf(min_str, "%02d", deltaTimeMin);
+		sprintf(sec_str, "%02d", deltaTimeSec);
+    lcd.print(String(min_str));
+    lcd.setCursor(9,3);
+    lcd.print(String(sec_str));
+    lcd.setCursor(17,2);
+		while (ss.available()) {
+			gps.encode(ss.read());
+		}
+		if (gps.satellites() == 255) {
+			lcd.print(0);
+		}else{
+			lcd.print(gps.satellites());
+		}
   }
 }
 
@@ -137,8 +187,7 @@ void loop() {
   int16_t acceleration = update_acceleration();
 
   if (stroking) {
-    if (abs(acceleration - GRAVITY) < STROKE_RECOVERY_TOLERANCE ||
-        millis() - state_change_millis > STROKE_DETECT_TIMEOUT) {
+    if (abs(acceleration - GRAVITY) < STROKE_RECOVERY_TOLERANCE) {
       stroking = false;
       lcd.clear();
       if (!isPull) strokes++;
@@ -148,56 +197,9 @@ void loop() {
     }
   } else {
     if (abs(acceleration - GRAVITY) > STROKE_START_ACCEL) {
-      state_change_millis = millis();
       stroking = true;
     }
   }
 
   delay(1);
-}
-void startup(){
-  lcd.setCursor(0 ,0);
-  lcd.print("  DIY SPEED COACH!  ");
-  lcd.setCursor(0 ,1);
-  lcd.print("  Accelerometer:    ");
-  lcd.setCursor(0 ,2);
-  lcd.print(" GPS: Sat Count:    ");
-  lcd.setCursor(0 ,3);
-  lcd.print("Time:   :           ");
-	delay(1000);
-  accel.initialize();
-  if (!accel.testConnection()) {
-    lcd.setCursor(17 ,1);
-    lcd.print("X");
-  } else {
-    lcd.setCursor(17,1);
-    lcd.print("Y");
-  }
-  accel.setFullScaleAccelRange(1);
-  accel.setXAccelOffset(ACCEL_X_OFFSET);
-  accel.setYAccelOffset(ACCEL_Y_OFFSET);
-  accel.setZAccelOffset(ACCEL_Z_OFFSET);
-  setup_trip();
-
-  int32_t initTime = millis();
-  int32_t deltaTimeMin = 0;
-  while((10 > gps.satellites() || gps.satellites() == 255)&&(deltaTimeMin < 2)){
-    int32_t curTime = millis();             //millis is in milliseconds
-    int32_t deltaTime = curTime - initTime; //in milliseconds
-    deltaTimeMin = (deltaTime/1000)/60; //(ms / 1000)/60 = 1s /60 = 1min
-    int32_t deltaTimeSec = (deltaTime/1000) - (deltaTimeMin*60);  //(ms / 1000) = 1s
-    lcd.setCursor(6,3);
-    lcd.print(deltaTimeMin);
-    lcd.setCursor(9,3);
-		if (deltaTimeSec == 0) {
-			lcd.print(0);
-		}
-    lcd.print(deltaTimeSec);
-    lcd.setCursor(17,2);
-		if (gps.satellites() == 255) {
-			lcd.print(0);
-		}else{
-			lcd.print(gps.satellites());
-		}
-  }
 }
