@@ -146,6 +146,7 @@ void update_splits() {
 	float lat, lon;
 	gps.f_get_position(&lat, &lon);
 	float split_distance = gps.distance_between(lat, lon, last_lat, last_lon);
+	if (split_distance > GPS_PING_CAP * 100) split_distance = 0;
 	int split_secs, strokes_per_minute;
 
 	if (last_split_time != 0) {
